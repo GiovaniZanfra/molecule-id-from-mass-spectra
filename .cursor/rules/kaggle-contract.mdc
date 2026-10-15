@@ -1,0 +1,18 @@
+---
+description: Contrato do time de agentes Kaggle (sempre ativo)
+alwaysApply: true
+---
+
+Antes de qualquer tarefa neste repo, leia `AGENTS.md` (regras) e, se for seu
+primeiro passo numa conversa, `PLAYBOOK.md`.
+
+Resumo do que nunca pode ser quebrado:
+- Folds só via `get_folds()` / `run_cv()`; nada que use o target fora do fold.
+- Todo experimento é criado com `src/new_exp.py` e termina em `finish(...)`.
+- CV que vale é o do registry (`python src/top.py`); reporte copiando de lá.
+- Não edite `src/`, `comp.json`, `JOBS.md`, `LEARNINGS.md` nem scripts de outros autores.
+- Nunca apague/sobrescreva artefatos. Nunca rode `kaggle competitions submit`.
+- Treino pesado: `--debug` local, depois `python src/kaggle_run.py run ...`.
+- Job termina com learnings (`python src/new_note.py`).
+
+@AGENTS.md

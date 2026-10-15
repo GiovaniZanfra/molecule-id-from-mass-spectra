@@ -1,0 +1,26 @@
+{
+  "competition": "playground-series-s6e10",
+  "task": "binary",
+  "metric": "auc",
+  "id": "id",
+  "target": "PREENCHA_O_TARGET",
+  "n_folds": 5,
+  "seed": 42,
+  "files": {
+    "train": "train.csv",
+    "test": "test.csv",
+    "sample_submission": "sample_submission.csv"
+  },
+  "extra_files": [],
+  "classes": null,
+  "positive_label": null,
+  "submission_format": "value",
+  "submission_target": null,
+  "artifacts_dir": "{repo}/artifacts",
+  "kaggle_username": "",
+  "kaggle_kernel_prefix": "",
+  "kaggle_folds_dataset": "",
+  "kaggle_kernel_extra": {},
+  "debug_rows": 20000,
+  "suspicious_gain": null
+}

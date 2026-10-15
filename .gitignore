@@ -1,0 +1,14 @@
+# dados e artefatos (grandes, fora do git)
+data/
+artifacts/
+
+# python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.venv/
+venv/
+
+# kaggle
+kaggle.json
+.env
