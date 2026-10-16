@@ -1,8 +1,10 @@
 """Cria um experimento novo com o nome certo e o próximo número livre.
 
-    python src/new_exp.py xgb --author w1                     # template gbdt
+    python src/new_exp.py cosine --author w1                  # retrieval: template retrieval (padrão)
+    python src/new_exp.py xgb --author w1                     # tabular: template gbdt (padrão)
     python src/new_exp.py lr --author w1 --template blank     # template mínimo (sklearn)
     python src/new_exp.py stack --author mgr --template stack # stacking nível 2 (roda local)
+    python src/new_exp.py fusion --author mgr --template fusion  # retrieval: ensemble que vai pra submissão
     python src/new_exp.py xgb --author w2 --from xgb_boot_001 # parte de um experimento existente
 """
 from __future__ import annotations
@@ -13,7 +15,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from common import KIT_ROOT, NAME_RE, OOF_DIR, SCRIPTS_DIR, TOKEN_RE  # noqa: E402
+from common import CFG, KIT_ROOT, NAME_RE, OOF_DIR, SCRIPTS_DIR, TOKEN_RE  # noqa: E402
 
 EXP_DIR = KIT_ROOT / "experiments"
 TPL_DIR = EXP_DIR / "_templates"
@@ -22,7 +24,7 @@ TPL_DIR = EXP_DIR / "_templates"
 def next_number(family: str, author: str) -> int:
     pat = re.compile(rf"^{family}_{author}_(\d+)$")
     nums = [0]
-    for d, ext in ((EXP_DIR, "*.py"), (SCRIPTS_DIR, "*.py"), (OOF_DIR, "*.npy")):
+    for d, ext in ((EXP_DIR, "*.py"), (SCRIPTS_DIR, "*.py"), (OOF_DIR, "*.npy"), (OOF_DIR, "*.parquet")):
         if d.exists():
             for p in d.glob(ext):
                 m = pat.match(p.stem)
@@ -36,7 +38,8 @@ def main():
     ap.add_argument("family")
     ap.add_argument("--author", required=True)
     ap.add_argument("--from", dest="parent", default="")
-    ap.add_argument("--template", default="gbdt", choices=["gbdt", "blank", "stack"])
+    ap.add_argument("--template", default="retrieval" if CFG["task"] == "retrieval" else "gbdt",
+                    choices=["gbdt", "blank", "stack", "retrieval", "fusion"])
     args = ap.parse_args()
     for tok, what in ((args.family, "família"), (args.author, "autor")):
         if not TOKEN_RE.match(tok):

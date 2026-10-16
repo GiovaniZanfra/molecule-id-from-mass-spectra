@@ -2,6 +2,7 @@
 
     python src/kaggle_run.py setup                         # 1x: sobe folds.npy (+ extras) como dataset privado
     python src/kaggle_run.py run experiments/x.py          # empacota e envia (não espera)
+    python src/kaggle_run.py submit experiments/x.py       # retrieval: kernel de submissão (só teste → submission.csv)
     python src/kaggle_run.py run experiments/x.py --wait   # envia e espera terminar
     python src/kaggle_run.py wait [nome ...]               # espera pendentes, baixa e registra
     python src/kaggle_run.py status                        # lista pendentes
@@ -29,7 +30,8 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from common import (CFG, EXTRA_DIR, FOLDS_PATH, KAGGLE_DIR, KIT_ROOT, NAME_RE, OOF_DIR,  # noqa: E402
-                    PRED_DIR, REPORT_DIR, SCRIPTS_DIR, read_registry, register)
+                    PRED_DIR, QUERIES_PATH, REPORT_DIR, SCRIPTS_DIR, STRUCT_PATH, TRAIN_STRUCT_PATH,
+                    read_registry, register)
 
 SRC = Path(__file__).resolve().parent
 TOOLS = {"kaggle_run.py", "audit.py", "hill_climb.py", "make_folds.py", "new_exp.py", "new_note.py",
@@ -84,6 +86,28 @@ def cli(*args: str, check: bool = True) -> subprocess.CompletedProcess:
     return out
 
 
+def _module_value(code: str, var: str):
+    """Valor literal de uma variável de módulo do experimento (ex.: KAGGLE_DATASETS = [...])."""
+    import ast
+
+    for node in ast.parse(code).body:
+        if isinstance(node, ast.Assign) and any(getattr(t, "id", None) == var for t in node.targets):
+            try:
+                return ast.literal_eval(node.value)
+            except ValueError:
+                sys.exit(f"{var} precisa ser um literal (lista/dict) para o kaggle_run.py ler")
+    return None
+
+
+def module_list(code: str, var: str) -> list:
+    """Datasets do Kaggle que o experimento declara (ex.: pesos de modelo treinados em outro kernel)."""
+    return list(_module_value(code, var) or [])
+
+
+def module_dict(code: str, var: str) -> dict:
+    return dict(_module_value(code, var) or {})
+
+
 def load_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
 
@@ -108,6 +132,11 @@ def cmd_setup(_args):
     meta = FOLDS_PATH.with_suffix(".meta.json")
     if meta.exists():
         shutil.copy(meta, d / "folds.meta.json")
+    if CFG["task"] == "retrieval":  # validação fixa: estruturas, consultas e mapa linha → estrutura
+        for path in (STRUCT_PATH, TRAIN_STRUCT_PATH, QUERIES_PATH):
+            if not path.exists():
+                sys.exit(f"{path} não existe — rode python src/make_folds.py")
+            shutil.copy(path, d / path.name)
     extras = CFG.get("extra_files") or []
     for name in extras:
         src = EXTRA_DIR / name
@@ -143,32 +172,46 @@ for _p, _c in _FILES.items():
         _f.write(_b64.b64decode(_c))
 _os.environ.update({{"KIT_ON_KAGGLE": "1", "KIT_ROOT": _KIT, "KIT_EXP_NAME": "{name}"}})
 _sys.path.insert(0, _os.path.join(_KIT, "src"))
+_sys.argv += {argv}
 # === fim do bootstrap ===
 '''
 
 
-def build(exp: Path, gpu: bool = True, internet: bool = False) -> tuple[str, Path]:
+def build(exp: Path, gpu: bool = True, internet: bool = False, submit: bool = False) -> tuple[str, Path]:
     exp = Path(exp)
     name = exp.stem
     if not NAME_RE.match(name):
         sys.exit(f"{exp.name}: nome fora do padrão <familia>_<autor>_<NNN> (use src/new_exp.py)")
     code = exp.read_text(encoding="utf-8")
-    if "level=2" in code or "load_oof(" in code:
+    if "load_oof(" in code or "load_pred(" in code:
         sys.exit("este experimento lê OOFs locais (stacking) — rode local: python " + str(exp))
     files = {f"src/{p.name}": base64.b64encode(p.read_bytes()).decode()
              for p in sorted(SRC.glob("*.py")) if p.name not in TOOLS}
     files["comp.json"] = base64.b64encode((KIT_ROOT / "comp.json").read_bytes()).decode()
-    d = BUILD / name
+    datasets = list(module_list(code, "KAGGLE_DATASETS"))
+    for member in module_dict(code, "MEMBERS"):  # fusão: embute o script de cada membro
+        src = next((c for c in (KIT_ROOT / "experiments" / f"{member}.py", SCRIPTS_DIR / f"{member}.py")
+                    if c.exists()), None)
+        if src is None:
+            sys.exit(f"membro {member} sem script em experiments/ nem em {SCRIPTS_DIR}")
+        mcode = src.read_bytes()
+        files[f"members/{member}.py"] = base64.b64encode(mcode).decode()
+        datasets += module_list(mcode.decode("utf-8"), "KAGGLE_DATASETS")
+    d = BUILD / (f"{name}_submit" if submit else name)
     if d.exists():
         shutil.rmtree(d)
     d.mkdir(parents=True)
-    (d / f"{name}.py").write_text(HEADER.format(files=json.dumps(files), name=name) + code, encoding="utf-8")
+    argv = ["--submit"] if submit else []
+    (d / f"{name}.py").write_text(HEADER.format(files=json.dumps(files), name=name, argv=argv) + code,
+                                  encoding="utf-8")
     user = kaggle_user()
-    slug = kernel_slug(name)
+    slug = kernel_slug(f"{name}-sub" if submit else name)
     meta = {
         "id": f"{user}/{slug}", "title": slug, "code_file": f"{name}.py", "language": "python",
         "kernel_type": "script", "is_private": True, "enable_gpu": bool(gpu), "enable_internet": bool(internet),
-        "dataset_sources": [folds_dataset()], "competition_sources": [CFG["competition"]], "kernel_sources": [],
+        "dataset_sources": list(dict.fromkeys([folds_dataset()] + list(CFG.get("kaggle_datasets") or [])
+                                              + datasets)),
+        "competition_sources": [CFG["competition"]], "kernel_sources": [],
     }
     meta.update(CFG.get("kaggle_kernel_extra") or {})
     save_json(d / "kernel-metadata.json", meta)
@@ -176,8 +219,26 @@ def build(exp: Path, gpu: bool = True, internet: bool = False) -> tuple[str, Pat
 
 
 def cmd_build(args):
-    name, d = build(Path(args.exp), gpu=not args.no_gpu, internet=args.internet)
+    name, d = build(Path(args.exp), gpu=not args.no_gpu, internet=args.internet, submit=args.submit)
     print(f"[ok] pacote de {name} em {d}")
+
+
+def cmd_submit(args):
+    """Kernel de submissão: roda o experimento com --submit (sem CV) e grava submission.csv.
+    O agente só envia o kernel; quem submete na competição é o humano (botão Submit no Kaggle)."""
+    if CFG["task"] != "retrieval":
+        sys.exit("submit é para competições de código (retrieval)")
+    if args.internet:
+        sys.exit("kernel de submissão precisa de internet desligada")
+    name, d = build(Path(args.exp), gpu=not args.no_gpu, internet=False, submit=True)
+    out = cli("kernels", "push", "-p", str(d), check=False)
+    text = out.stdout + out.stderr
+    if out.returncode != 0 or "successfully pushed" not in text.lower():
+        print(text)
+        sys.exit("push falhou")
+    kernel = json.loads((d / "kernel-metadata.json").read_text())["id"]
+    print(f"[ok] kernel de submissão de {name} → https://www.kaggle.com/code/{kernel}")
+    print("     quando terminar, confira o submission.csv na saída; a submissão é feita por um humano.")
 
 
 def cmd_run(args):
@@ -249,6 +310,8 @@ def pull(name: str, from_dir: Path | None = None, force: bool = False) -> bool:
     logs = sorted(from_dir.rglob("*.log"))
     if logs:
         shutil.copyfile(logs[0], LOG_DIR / f"{name}.log")
+    if CFG["task"] == "retrieval":
+        return _pull_retrieval(name, from_dir, pend, force)
     bundles = sorted(from_dir.rglob(f"{name}_artifacts.npz"))
     if not bundles:
         print(f"[erro] {name}: kernel terminou sem {name}_artifacts.npz (o finish() rodou?). Final do log:")
@@ -263,6 +326,28 @@ def pull(name: str, from_dir: Path | None = None, force: bool = False) -> bool:
     np.save(dests["oof"], z["oof"])
     np.save(dests["preds"], z["preds"])
     dests["meta"].write_text(str(z["meta"]), encoding="utf-8")
+    register(name, where="kaggle")
+    if name in pend:
+        pend.pop(name)
+        save_json(PENDING, pend)
+    return True
+
+
+def _pull_retrieval(name: str, from_dir: Path, pend: dict, force: bool) -> bool:
+    srcs = {k: sorted(from_dir.rglob(f"{name}{suf}")) for k, suf in
+            (("oof", "_oof.parquet"), ("preds", "_preds.parquet"), ("meta", ".meta.json"))}
+    if not all(srcs.values()):
+        print(f"[erro] {name}: kernel terminou sem {name}_oof/_preds.parquet (o finish() rodou?). Final do log:")
+        print(_tail(LOG_DIR / f"{name}.log"))
+        return False
+    dests = {"oof": OOF_DIR / f"{name}.parquet", "preds": PRED_DIR / f"{name}.parquet",
+             "meta": OOF_DIR / f"{name}.meta.json"}
+    for dest in dests.values():
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        if dest.exists() and not force:
+            sys.exit(f"{dest} já existe (artefatos não são sobrescritos)")
+    for k, dest in dests.items():
+        shutil.copyfile(srcs[k][0], dest)
     register(name, where="kaggle")
     if name in pend:
         pend.pop(name)
@@ -319,11 +404,13 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
     sub.add_parser("setup").set_defaults(fn=cmd_setup)
-    for cmd, fn in (("build", cmd_build), ("run", cmd_run)):
+    for cmd, fn in (("build", cmd_build), ("run", cmd_run), ("submit", cmd_submit)):
         p = sub.add_parser(cmd)
         p.add_argument("exp")
         p.add_argument("--no-gpu", action="store_true")
         p.add_argument("--internet", action="store_true")
+        if cmd == "build":
+            p.add_argument("--submit", action="store_true", help="monta o kernel de submissão")
         if cmd == "run":
             p.add_argument("--wait", action="store_true")
             p.add_argument("--timeout", type=float, default=240, help="minutos")

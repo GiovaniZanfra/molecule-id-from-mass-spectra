@@ -4,6 +4,8 @@ Convenção de previsões:
 - binary: vetor (n,) com probabilidade da classe positiva
 - regression: vetor (n,)
 - multiclass: matriz (n, k) de probabilidades, colunas na ordem de class_names()
+- retrieval: y = chave da métrica (chem.metric_key) da resposta, uma por consulta;
+  p = uma lista de chaves por consulta, melhor palpite primeiro
 """
 from __future__ import annotations
 
@@ -67,6 +69,31 @@ def map3(y, p) -> float:
     return float(np.mean((hit / np.arange(1, 4)).sum(1)))
 
 
+MAX_RANK = 25
+
+
+def reciprocal_ranks(y, p, max_rank: int = MAX_RANK) -> np.ndarray:
+    """1/posição do primeiro acerto por consulta (0 se nenhum), como o scorer oficial v13.
+
+    Entradas vazias ("") são descartadas antes de contar posições; chave None (SMILES que não
+    parseia) ocupa posição. Lista com mais de max_rank palpites é erro, como no Kaggle.
+    """
+    out = np.zeros(len(y), dtype=np.float64)
+    for i, (truth, guesses) in enumerate(zip(y, p)):
+        guesses = [g for g in guesses if g != ""]
+        if len(guesses) > max_rank:
+            raise ValueError(f"consulta {i}: {len(guesses)} palpites (máximo {max_rank})")
+        for rank, g in enumerate(guesses, 1):
+            if g is not None and g == truth:
+                out[i] = 1.0 / rank
+                break
+    return out
+
+
+def mrr25(y, p) -> float:
+    return float(reciprocal_ranks(y, p).mean()) if len(y) else float("nan")
+
+
 @dataclass(frozen=True)
 class Metric:
     fn: Callable
@@ -83,4 +110,5 @@ METRICS: dict[str, Metric] = {
     "rmse": Metric(rmse, False, ("regression",)),
     "rmsle": Metric(rmsle, False, ("regression",)),
     "mae": Metric(mae, False, ("regression",)),
+    "mrr25": Metric(mrr25, True, ("retrieval",)),
 }

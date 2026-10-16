@@ -33,8 +33,9 @@ def main():
         if path.exists():
             files.append((path, arc))
 
-    for rel in ("AGENTS.md", "comp.json", "LEARNINGS.md", "notes/eda.md", "src/common.py", "src/metric.py",
-                "experiments/_templates/gbdt.py"):
+    tpl = "retrieval" if CFG["task"] == "retrieval" else "gbdt"
+    for rel in ("AGENTS.md", "comp.json", "LEARNINGS.md", "notes/eda.md", "notes/competition.md",
+                "notes/research.md", "src/common.py", "src/metric.py", f"experiments/_templates/{tpl}.py"):
         add(KIT_ROOT / rel, rel)
     add(REPORT_DIR / "audit.md", "reports/audit.md")
     add(REPORT_DIR / "ensemble.md", "reports/ensemble.md")

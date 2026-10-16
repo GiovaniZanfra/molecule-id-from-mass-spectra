@@ -43,6 +43,9 @@ def main():
     blocked = blocked_models()
     reg["status"] = reg["name"].map(lambda n: "BLOQ" if n in blocked else "")
     cols = ["name", "cv", "cv_std", "level", "status", "where", "parent", "notes"]
+    if CFG["task"] == "retrieval":  # MRR por classe simulada; cv = média ponderada por class_weights
+        cols[3:3] = ["cv_c1", "cv_c2", "cv_c3"]
+        print(f"classes ponderadas por {CFG['validation']['class_weights']} (comp.json → validation)\n")
     with_notes = reg[cols].head(args.n).copy()
     with_notes["notes"] = with_notes["notes"].astype(str).str.slice(0, 60)
     print(with_notes.to_string(index=False))
