@@ -69,6 +69,7 @@ descobre o checkout principal pelo git. Caminhos: `python src/top.py --where`.
 | **Gerente** | avalia workers, consolida memória, escreve a próxima campanha, monta ensemble | `30_manager.md` | frontier, 1 conversa por campanha |
 | **Auditor** | investiga cada FAIL/WARN do `audit.py` e dá veredito | `40_auditor.md` | Composer; frontier só se o caso for cabeludo |
 | **Consultor Pro** | resolve UMA tarefa difícil em turno único, fora do Cursor | `50_pro_packet.md` | ChatGPT Pro / Claude no navegador |
+| **Batedor** | todo dia: lê o delta do fórum e dos notebooks, atualiza `notes/research.md` e propõe 0–1 job | `60_scout.md` | Sonnet, headless pelo `src/scout.sh` |
 
 O humano (você) é dono do processo: define as fases, aprova `JOBS.md` se
 quiser, faz as submissões e leva o pacote pro modelo Pro.
@@ -98,6 +99,15 @@ avalia os workers, consolida `LEARNINGS.md` e propõe a próxima campanha.
 
 **Fase 5 — Submissão (você).** Só se o CV *nested* do ensemble melhorar o
 anterior por mais que o ruído. Volta para a Fase 3.
+
+**Todo dia — Batedor (automático).** O agendador do Windows roda `src/scout.sh`:
+`src/kaggle_intel.py` baixa só o que mudou (tópicos e top-30 notebooks por score) para
+`artifacts/intel/<data>/`; se houver novidade, o batedor cruza com o registry e o `LEARNINGS.md`,
+acrescenta `## Atualização <data>` em `notes/research.md` e escreve `reports/intel/<data>.md` com
+0 ou 1 job proposto (id `p<data>`). Ele não roda experimento nem gasta GPU: o job só vira trabalho
+quando você aprova ("rode o job proposto em reports/intel/<data>.md como worker") ou quando o
+gerente o inclui na campanha. Ideia pública não é copiada: vira experimento nosso, com os nossos
+folds, a partir da família `meta` (job j7).
 
 Supervisão: não deixe agente rodando mais que algumas horas sem olhar.
 O próprio Chris diz que não passa de 12h sem supervisionar.

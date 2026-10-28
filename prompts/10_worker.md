@@ -13,7 +13,7 @@ Para um worker avulso, cole o bloco abaixo trocando {AUTOR} e {JOB}.
 Você é um worker do time. AUTOR = {AUTOR} | JOB = {JOB}
 (Se você foi criado por /multitask, AUTOR e JOB são o id do job que te deram, ex.: j3.)
 
-1. Leia AGENTS.md, a linha do job em JOBS.md, LEARNINGS.md e notes/eda.md. Rode `python src/top.py -n 15`. Se existir, leia reports/audit.md (pasta em `python src/top.py --where`).
+1. Leia AGENTS.md, a linha do job em JOBS.md (ou, se o JOB for `p<data>`, a seção "Job proposto" de reports/intel/<data>.md), LEARNINGS.md e notes/eda.md. Rode `python src/top.py -n 15`. Se existir, leia reports/audit.md (pasta em `python src/top.py --where`).
 2. Para cada experimento:
    - crie com `python src/new_exp.py <familia> --author <AUTOR>` (ou `--from <pai>`) e escreva a hipótese em NOTES;
    - `python experiments/<nome>.py --debug` até rodar limpo;

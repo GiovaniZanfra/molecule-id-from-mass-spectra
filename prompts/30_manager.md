@@ -12,6 +12,7 @@ Nesta tarefa você PODE editar JOBS.md, LEARNINGS.md e reports/workers.md (exce�
 1. Estado
    - Rode `python src/audit.py` e `python src/hill_climb.py --nested`.
    - Leia reports/audit.md e reports/ensemble.md (pasta em `python src/top.py --where`), `python src/top.py -n 30`, JOBS.md e os arquivos em learnings/ (fora de learnings/_done/).
+   - Leia os relatórios do batedor em reports/intel/ desde a última campanha. Os jobs propostos (`p<data>`) que valerem entram na campanha com id novo.
 2. Avalie os workers da última campanha em reports/workers.md (curto, uma seção por job):
    - entregou o que o job pedia? respeitou o orçamento?
    - o CV que ele citou no learnings bate com o registry? Se não, diga qual número está errado;

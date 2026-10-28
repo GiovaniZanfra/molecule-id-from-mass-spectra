@@ -14,6 +14,7 @@ Campanha: 1 (escrita pelo bootstrap em 2026-10-16). Referência: `cosine_boot_00
 | j4 | original | pool externo (COCONUT + PubChemLite) como dataset e CV com o pool realista | cosine_boot_002 | 2 exp + dataset | dataset publicado + c2 realista medida |
 | j5 | diverse | c3: gerar candidatas restritas à fórmula a partir de análogos | cosine_boot_002 | 3 exp | c3 ≥ 0,02 sem c1/c2 caírem mais que 0,01 |
 | j6 | loop | melhorar o canal de cosseno (c1 e propagação) | cosine_boot_002 | 6 exp | CV ≥ 0,260 ou c1 ≥ 0,92 |
+| j7 | port | reconstruir a linhagem pública (0,464) como família `meta`, um bloco por experimento | cosine_boot_002 | 6 exp | cada bloco com ganho medido por classe; base `meta` para os jobs do batedor |
 
 ## Detalhes
 
@@ -55,3 +56,15 @@ WARN quando c3 > 0: explique o gerador no learnings para o auditor. Meça a c3 p
 em ppm, top-N picos/potência, casar só o mesmo aduto (fallback para o modo), agregação de vários
 espectros (média × máx × top-2), gamma/soma na propagação. Registre os intermediários. Não ajuste
 nada no `test.parquet` visível.
+
+**j7 — port-meta.** Base no nosso contrato para o que o batedor (`prompts/60_scout.md`) propuser todo dia.
+Siga a linhagem descrita em `notes/research.md` §0 e §3, **um bloco por experimento** (`meta_j7_001`,
+`--from` o anterior), para que cada ganho apareça no registry por classe: (1) fusão RRF por posição
+`1/(3+r1) + 0,6/(3+r2)` sobre o motor de cosseno e a propagação; (2) FPNet próprio `f·z` (reuse o
+modelo do j1 se já estiver registrado, senão treine do zero no Kaggle); (3) simuladores GLACIER/ICEBERG
+com checkpoints MassSpecGym oficiais do `coleygroup/ms-pred`, reordenando dentro do grupo de fórmula;
+(4) rank 1 único entre moléculas; (5) canal PubChem com promoção `rel > 150` e prior de popularidade
+(só depois do pool do j4; antes disso, deixe pronto e meça com o pool do train). **Não use** pesos de
+outros competidores sem código de treino público (`casmi26-fpnet-full1`, `v4b-models` etc., regra 11).
+Os checkpoints MassSpecGym podem ter visto estruturas de validação: meça a sobreposição com
+`ctx.excluded` e, se houver, registre o bloco como "só-teste" nas NOTES e no learnings (regra 5).

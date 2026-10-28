@@ -124,6 +124,28 @@ navegador, sobe o zip, cola o prompt, turno único. Detalhes em `prompts/50_pro_
 
 ---
 
+## Batedor diário
+
+`src/scout.sh` coleta o que mudou no Kaggle (`src/kaggle_intel.py`) e, se houver novidade, roda o
+`prompts/60_scout.md` com `claude -p` (Sonnet, permissões fechadas: lê tudo, escreve só em
+`notes/research.md` e `artifacts/reports/intel/`). Sem novidade, o LLM não roda.
+
+```
+bash src/scout.sh                                  # rodar à mão
+cat artifacts/reports/intel/usage.csv              # tokens e custo de cada dia
+```
+
+Agendamento (Windows, uma vez; precisa do PC ligado no horário):
+
+```
+schtasks.exe /Create /TN casmi26-scout /SC DAILY /ST 07:43 /F /TR "wsl.exe -d Ubuntu-24.04 -e bash -lc /home/giova/workspace/molecule-id-from-mass-spectra/src/scout.sh"
+```
+
+Para aprovar o job proposto, numa sessão: "rode o job proposto em reports/intel/<data>.md
+seguindo prompts/10_worker.md, AUTOR = JOB = p<data>".
+
+---
+
 ## No Claude Code
 
 Igual. O `CLAUDE.md` importa o `AGENTS.md`. Para a campanha, peça para rodar os

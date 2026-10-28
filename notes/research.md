@@ -1,9 +1,35 @@
-# Estado da arte público — CASMI 2026 (fórum + notebooks, até 2026-10-22)
+# Estado da arte público — CASMI 2026 (fórum + notebooks, até 2026-10-28)
 
 Fontes: 118 tópicos do fórum e os ~20 notebooks mais votados/mais bem pontuados.
 Números entre colchetes = id do tópico; `autor/slug` = notebook no Kaggle.
 Regras e respostas da organização: `notes/competition.md`.
 As seções 1–7 são o levantamento de 15/10; a seção 0 traz o que mudou até 22/10.
+
+## Atualização 2026-10-28
+**Placar.** Melhor notebook público: **0,477** (`busyaprime/lb-0-477-two-0-472-fixes-merged-the-right-way`, lido 28/10);
+`heliosli/happy-to-make-the-dataset-public-if-it-helps` 0,475 (precisa de dataset privado); ~10 em 0,472. Era 0,464 em 22/10.
+O topo do LB de times não aparece no delta (a faixa 0,469–0,504 da seção 0 vale como última leitura).
+
+**Linhagem 0,465 → 0,477** (`busyaprime/...`, `alexchilton/...0-75`):
+- Rede espectro↔estrutura `casmi-spectrum-model-v1` (sanpier) fundida por RRF `w/(3+rank)`: 0,466 com w=0,25.
+- Leader-safe: rank 1 com w=0,25 e ranks 2–25 com w=0,50 → 0,468 (`romanrozen`); w=0,75 → 0,472; w=1,00 → 0,470; offset RRF 1 → 0,466.
+- "Fragment check" sem treino, regra física para o rank 1 (`romantamrazov/casmi-2026-spectral-parallax`, 0,472).
+  Empilhar os dois só vale se o check roda na ordem V2 e os ranks 2–25 vêm da ordem 0,75: 0,477.
+- Tail rescue (3 últimas posições para candidatas de fora): 0,468 → 0,468.
+- Cada passo é ≤ 1 molécula (≈ 0,008; ~125 moléculas no público). A rede é peso de terceiros: sem código de treino, não é elegível a prêmio.
+
+**Regras (organização, 26–28/10).**
+- Uso automático e sem rótulo de similaridade entre espectros de moléculas diferentes do teste: permitido [751373, 752297].
+- Não reproduzível sai do LB, não só do prêmio, e o LB é recalculado [748882, 752541].
+- Peso sem código de treino: não elegível; retreinar com código próprio e dados permitidos vale [745072, 749397].
+- Tabela de candidatas alterada do original exige o código dos passos; basta código + dados + versão/data, sem igualdade bit a bit [748882, 751373].
+- SIRIUS/CSI:FingerID: não. Modelos só de bibliotecas públicas e modelos químicos de linguagem/grafo: sim. PubChemLite: sim [751373].
+- Atlas ICEBERG do PubChem (previsões) e a lista de membros: liberados em Dataset privado com o código de recuperação [745134].
+  Pendência: o ICEBERG do atlas vem de modelo treinado com NIST'23; confirmar com o humano antes de usar (regra 11).
+- Org não divulga a classe de cada molécula; pode usar versões mais novas das fontes do train [750684].
+
+**Classe 3.** Mais um negativo: biotransformação por regras sobre análogos recupera poucas c3 [753400, só título]. Nenhum ganho público de c3 desde 22/10 [751300].
+Corpo dos tópicos novos de 28/10 veio vazio; só títulos/comentários foram lidos.
 
 ## 0. Atualização 2026-10-22
 **Placar.** LB público: topo 0,504 · 0,499 · 0,495 · 0,489 · 0,484; ~15 times entre 0,469 e 0,475.
