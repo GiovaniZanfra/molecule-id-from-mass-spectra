@@ -26,5 +26,8 @@
   "kaggle_folds_dataset": "",
   "kaggle_kernel_extra": {},
   "debug_rows": 20000,
-  "suspicious_gain": null
+  "suspicious_gain": null,
+  "kaggle_datasets": [
+    "metric/rdkit-2026-3-3-wheel"
+  ]
 }

@@ -40,6 +40,10 @@ repo/                         (versionado no git)
 artifacts/                    (fora do git; compartilhado entre worktrees)
   data/                       train/test/sample_submission (+ data/extra/)
   folds.npy                   os 5 folds — nunca recriar no meio da competição
+  structures.parquet          retrieval: uma linha por estrutura (chave da métrica)
+  queries.parquet             retrieval: consultas de validação (fold, classe simulada 1/2/3)
+  train_struct.npy            retrieval: estrutura de cada linha do train
+  cache/                      retrieval: picos limpos do train (mmap) e chaves já calculadas
   registry.csv                um registro por experimento, CV recalculado
   oof/ preds/                 <nome>.npy (+ <nome>.meta.json em oof/)
   scripts/                    cópia exata do código que gerou cada artefato
@@ -144,6 +148,8 @@ Próxima ideia (1–3, concretas):
 - Ganho menor que o ruído não é ganho. Ruído ≈ desvio entre folds / √5
   (aparece no `top.py` e no `ensemble.md`).
 - LB público é sanity check, não alvo. Poucas submissões.
+- CASMI: o LB público tem ~130 moléculas (1 molécula ≈ 0,008). Decida pelo CV, olhando cada
+  classe simulada (c1/c2/c3) — ganho que só aparece numa classe pode sumir no teste.
 - Lição do Chris (S6E4): depois do 3º dia, mais trabalho subiu o CV e derrubou o
   private. Agentes batem o teto rápido; campanha longa demais vira overfit.
 

@@ -1,8 +1,51 @@
-# Estado da arte público — CASMI 2026 (fórum + notebooks, até 2026-10-15)
+# Estado da arte público — CASMI 2026 (fórum + notebooks, até 2026-10-22)
 
-Fontes: 98 tópicos do fórum e os ~15 notebooks mais votados/mais bem pontuados.
+Fontes: 118 tópicos do fórum e os ~20 notebooks mais votados/mais bem pontuados.
 Números entre colchetes = id do tópico; `autor/slug` = notebook no Kaggle.
 Regras e respostas da organização: `notes/competition.md`.
+As seções 1–7 são o levantamento de 15/10; a seção 0 traz o que mudou até 22/10.
+
+## 0. Atualização 2026-10-22
+**Placar.** LB público: topo 0,504 · 0,499 · 0,495 · 0,489 · 0,484; ~15 times entre 0,469 e 0,475.
+Melhor notebook público: **0,464** (`dmitriigluzdov/casmi-26-the-data-behind-spectra-to-structures`);
+`flexonafft/casmi26-closing-the-evidence-gap` 0,462. Do topo ao público ≈ 0,04 ≈ 5 moléculas.
+
+**Linhagem 0,446 → 0,464** (scores por versão em `dariushafshar/casmi26-the-public-chain-version-by-version`):
+- PubChem promovido com `rel > 150` em vez de 250: +0,003 a +0,006 em 4 bases diferentes (0,451).
+- ChEBI/LIPID MAPS CC BY (`sergiomalv`) no pool do motor 2 (≈ +0,005).
+- **N1A**: sem espectro `[M+H]+`, os de `[M+NH4]+` / `[M-H2O+H]+` viram proxies `[M+H]+` para o GLACIER (0,452).
+- PubChemLite CC0 no pool do motor 2 (0,455). Em duas bases deu −0,003 e +0,004: ruído.
+- Peso da popularidade no canal PubChem 0,25 → 0,15 (0,456).
+- **N1 challenger** (0,462–0,464): mantém os proxies GLACIER onde já há ICEBERG e reordena
+  por ICEBERG + GLACIER-proxy juntos. Deu +0,008 (≈ 1 molécula) nas duas bases em que foi testado.
+- Ablações do Dmitrii: tirar os candidatos que só existem no PubChem derruba **0,464 → 0,409**
+  (o canal PubChem, ~105M estruturas a ±10 ppm, vale ~0,055 no público). Gerar a partir de 20
+  análogos em vez de 6 piorou (0,456). 1 ou 5 FPNets fold-safe: igual.
+- Quem mediu a cadeia inteira: 94% dos passos são menores que 1 erro-padrão (~0,04 com ~132
+  moléculas); rodar o mesmo código de novo varia até 0,006. Os ganhos reais vieram de
+  **evidência nova** (simuladores, segundo motor) e **fonte nova de candidatos**, não de pesos.
+
+**Em teste nos notebooks públicos (sem score confiável):**
+- `ahmedberatozer/casmi26-v23a-fpnet-s-views`: FPNet treinado com 25–50% de espectros `[M+H]+`
+  simulados pelo GLACIER para estruturas só do COCONUT (holdout NP +0,016 a +0,031; sintético −0,006 a −0,016).
+  O treino roda num kernel que não é público.
+- `ahmedberatozer/casmi26-v25-unq`: rank 1 único entre moléculas (o teste não repete estrutura;
+  se duas linhas têm o mesmo top-1, só a de maior evidência fica com ele e a outra troca 1↔2).
+- `ahmedberatozer/casmi26-v18-c3r3`: canal de classe 3 (derivação de análogos mais larga) inserido no rank 3.
+- Dmitrii: prior de documentação ampliado (depositor de espectro, COCONUT/LOTUS/NPAtlas,
+  sinônimos PubChem, literatura LOTUS) e 5 FPNets fold-safe no canal PubChem: sem ganho visível no LB.
+  Os scripts de treino desses FPNets são públicos (Apache-2.0), ao contrário do `casmi26-fpnet-full1`.
+- `saddamaditya`: "dual gate", que também promove com `rel > 130 e pop ≥ 2,5`.
+
+**Classe 3 continua sem ganho público.** Dois times com validação própria de classe 3: melhora
+local, LB parado há duas semanas [751300]. O gerador do motor 1 (edição de análogos) produz a estrutura
+certa para 100 de 130 moléculas fora dos bancos, mas só 7 ficam em 1º [750241]; abrir mais pais
+piora (Dmitrii). Fragmentos de moléculas fora do PubChem também quase nunca estão catalogados
+(300–600 Da: 5% contra 9%) → precisa de gerador, não de busca. Ninguém publicou ganho com
+DiffMS, FRIGID ou MIST.
+
+**Ambiente.** Cópias de notebooks rodando na imagem nova (Python 3.13) pontuaram até 0,014 abaixo
+do original; fixar a imagem ("Pin to original environment") [749908].
 
 ## 1. Placar e ruído
 - LB público (15/10): topo 0,495 · 0,491 · 0,486 · 0,484; ~10 times entre 0,46 e 0,47.
@@ -98,6 +141,8 @@ biblioteca, mas vale no máximo ~0,16 do score [741404, 744417].
 - Teste visível: 79% `[M+H]+`, 16% `[M-H]-`, sem dímeros, m/z 245–460. Train: 46% timsTOF,
   13% dímeros, m/z absurdos (2 a 2,4M) [744011]. Precursor timsTOF: 99% dentro de 5 ppm [743254].
 - Os adutos da Enveda estão limpos; nas bibliotecas há ~12k `[M+CH2O2-H]-` mal rotulados (formato) [742087].
+- `precursor_error_ppm` do train é em **módulo** e está **errado para `[M+CH2O2-H]-`** (mediana ~2.000 ppm,
+  embora o precursor esteja certo). Recalcule com `chem.ADDUCT_SHIFT` (medição nossa, 15/10).
 - 22 pares de espectros idênticos com rótulos de isômeros diferentes (msdial × riken) [744446].
 - Íons positivos do `enveda-180`: subtrair 0,000548 Da (`notes/competition.md`).
 - `enveda-np-examples`: as 250 estruturas também estão em outras bibliotecas. Separar por

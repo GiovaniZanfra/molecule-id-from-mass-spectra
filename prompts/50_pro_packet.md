@@ -23,7 +23,7 @@ Arquivos no pacote:
 Tarefa: {TASK}
 
 Como responder:
-- Entregue UM script Python completo no formato de experiments/_templates/gbdt.py: usa run_cv() (os folds do time), nada que use o target fora do fit_predict, termina em finish().
+- Entregue UM script Python completo no formato do template incluído (experiments/_templates/): usa run_cv() (os folds do time), respeita a regra 5 do AGENTS.md (em retrieval: só `ctx.train_mask`, nada de `ctx.excluded`), termina em finish().
 - Pense fora do que o time já tentou (veja LEARNINGS.md). Se repetir algo, explique por que agora seria diferente.
 - Antes do código, no máximo 8 linhas: a ideia, por que deve ajudar o ensemble (diversidade conta) e o risco.
 - Não invente arquivos que não estão no pacote; se precisar de algo que não existe, diga.

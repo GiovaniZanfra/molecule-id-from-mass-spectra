@@ -49,7 +49,7 @@ Entrada/merge: 2026-12-07 · Final: 2026-12-14 (23:59 UTC). Prêmio total US$ 50
 **`enveda-np-examples`** (1.151 espectros / 250 produtos naturais, mesmo instrumento e
 pipeline do teste → melhor proxy de validação).
 
-## Esclarecimentos da organização (fórum, até 2026-10-15)
+## Esclarecimentos da organização (fórum, até 2026-10-22)
 Organização: David Healey (Enveda), Marie Killian e `inversion` (Kaggle).
 Número entre colchetes = id do tópico (`kaggle competitions topics show <slug> <id>`).
 
@@ -90,7 +90,11 @@ Número entre colchetes = id do tópico (`kaggle competitions topics show <slug>
   MassSpecGym do `coleygroup/ms-pred`) [744338]; espectros do atlas ICEBERG do PubChem [745134];
   DreaMS, inclusive o backbone SSL [745604, 748882]; CFM-ID 4 com os pesos de fábrica e espectros
   CFM-ID gerados do COCONUT [741912, 743774]; checkpoints oficiais do FRIGID [746430];
-  TabPFN v2 e 2.5+ [748882]; ChemBERTa [742011].
+  TabPFN v2 e 2.5+ [748882]; ChemBERTa [742011]; DiffMS (Zenodo 15122968) e DualLGD
+  (Zenodo 20281201), mesmo pré-treinados com HMDB [750252].
+- Desde 2026-10-17 a restrição a dado open source com licença **não comercial** caiu de vez (David Healey) [750330].
+- Em aberto (sem resposta até 22/10): checkpoints MIST do `coleygroup` (Zenodo 23303289, MIT,
+  MassSpecGym, 20/10), MS2DeepScore 2.0, FIORA, SIRIUS/CSI:FingerID [751373].
 - Usar a fórmula derivada de cada candidato como entrada de um modelo é permitido [745832].
 - Treinar fora do Kaggle (nuvem privada, Hugging Face) com os dados de treino é permitido [741876].
 
@@ -102,6 +106,10 @@ Número entre colchetes = id do tópico (`kaggle competitions topics show <slug>
 - **Reprodutibilidade**: todo peso usado precisa ter o código de treino original **e** acesso
   aos dados permitidos. Pesos compartilhados por outros competidores **sem código de treino
   não podem ser usados como estão**; retreine você mesmo com código próprio [745841, 748065, 748882].
+  Vale também para pesos de competidores treinados só no `train.parquet` [750612] e para
+  fine-tunes de modelos aprovados sem receita publicada [749217]. Envios antigos não reproduzíveis
+  não desclassificam os futuros, mas não podem ganhar; se o autor publicar o código de treino
+  até o fim, os pesos passam a valer [748882].
   Muitos notebooks públicos acima de 0,40 dependem desses pesos.
 - A organização pode verificar **qualquer** submissão; submissão fora das regras sai do
   leaderboard, não só do prêmio [745615, 748882].

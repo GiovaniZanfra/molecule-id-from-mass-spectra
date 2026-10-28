@@ -4,3 +4,5 @@ scipy
 scikit-learn
 xgboost
 kaggle
+pyarrow
+rdkit==2026.3.3

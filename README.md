@@ -19,6 +19,32 @@ Funciona no **Cursor** e no **Claude Code** — o mesmo repo, as mesmas regras.
 
 ---
 
+## Esta competição: Enveda CASMI 2026 (retrieval)
+
+Não é tabular: cada consulta é uma molécula (1–16 espectros MS/MS) e a previsão é uma lista de
+até 25 SMILES, avaliada por MRR@25 na chave da métrica (InChIKey14 após RDKit 2026.03.3).
+O kit foi adaptado assim:
+
+- `src/chem.py`: chave da métrica idêntica ao scorer oficial, massas e adutos.
+- `src/make_folds.py`: tabela de estruturas, folds por estrutura e ~1.350 consultas de
+  validação com classe simulada (1: estrutura tem espectro em outra biblioteca; 2: só no banco de
+  estruturas; 3: fora de tudo). O CV é a média por classe ponderada por `validation.class_weights`.
+- `src/spectra.py`: cache de picos limpos (~840 MB, mmap) e cosseno vetorizado.
+- Experimento = `predict(ctx)` (template `retrieval`); ensemble = fusão por posição
+  (`hill_climb.py` escolhe os pesos, template `fusion` gera a submissão).
+- Competição de código: `kaggle_run.py submit` monta o kernel que roda só o teste e grava
+  `submission.csv`; você submete pelo botão Submit do kernel.
+
+Setup desta competição (já feito neste repo, exceto o `kaggle_run.py setup`):
+```
+pip install -r requirements.txt          # inclui rdkit==2026.3.3 (versão do scorer)
+python src/make_folds.py                 # ~13 min na 1ª vez (chaves de 277 mil SMILES)
+python src/kaggle_run.py setup           # sobe folds + estruturas + consultas como dataset privado
+python experiments/cosine_infra_001.py --debug
+```
+
+---
+
 ## Setup (uma vez por competição, ~15 min)
 
 1. **Repo novo:** copie esta pasta, `git init`, commit inicial.
@@ -88,6 +114,9 @@ python src/top.py                      # estado do time
 cat artifacts/reports/ensemble.md      # CV nested e veredito vs. ensemble anterior
 kaggle competitions submit -c <slug> -f artifacts/subs/hc_NNN.csv -m "hc_NNN nested 0.xxxxx"
 ```
+Competição de código (CASMI): o CSV acima é só do teste visível. Crie o experimento de fusão
+indicado no `ensemble.md`, rode `python src/kaggle_run.py submit experiments/fusion_<autor>_NNN.py`
+e, quando o kernel terminar, clique em Submit na página dele.
 
 **Consultor Pro (quando travar):** `python src/make_packet.py "tarefa concreta"`
 gera `packet.zip` + `PROMPT.md`. Conversa nova no ChatGPT Pro / Claude no
@@ -132,8 +161,8 @@ time é a pasta de artefatos, não a ferramenta.
 | Campo | Exemplo | Nota |
 |---|---|---|
 | `competition` | `playground-series-s6e10` | slug da URL |
-| `task` | `binary` / `multiclass` / `regression` | |
-| `metric` | `auc`, `logloss`, `accuracy`, `mlogloss`, `map3`, `rmse`, `rmsle`, `mae` | nova métrica: `src/metric.py` |
+| `task` | `binary` / `multiclass` / `regression` / `retrieval` | |
+| `metric` | `auc`, `logloss`, `accuracy`, `mlogloss`, `map3`, `rmse`, `rmsle`, `mae`, `mrr25` | nova métrica: `src/metric.py` |
 | `id`, `target` | `id`, `Churn` | nomes das colunas |
 | `classes` | `["No","Yes"]` | opcional; ordem das classes (multiclass/proba) |
 | `positive_label` | `"Yes"` | binary com rótulo texto |
@@ -146,3 +175,5 @@ time é a pasta de artefatos, não a ferramenta.
 | `kaggle_kernel_extra` | `{}` | campos extras do kernel-metadata.json |
 | `debug_rows` | `20000` | tamanho da amostra no `--debug` |
 | `suspicious_gain` | `null` | salto de CV que o audit marca; `null` = automático |
+| `kaggle_datasets` | `["metric/rdkit-2026-3-3-wheel"]` | datasets anexados a todo kernel |
+| `validation` | ver `src/common.py` | retrieval: tamanho de cada subconjunto, `class_weights`, `debug_queries` |
